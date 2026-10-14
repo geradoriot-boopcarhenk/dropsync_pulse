@@ -1,0 +1,14 @@
+logs/
+.env
+__pycache__/
+firebase-credentials.json
+firebase-credentials.json
+.env
+firebase-credentials.json
+.env
+logs/
+__pycache__/
+firebase-credentials.json
+.env
+*.log
+ngrok.tgz
