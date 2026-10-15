@@ -2,7 +2,10 @@ FROM python:3.11-slim
 
 WORKDIR /app
 
-# Instala o Supervisor de forma nativa via gerenciador de pacotes do Linux
+ENV DEBIAN_FRONTEND=noninteractive
+ENV PYTHONUNBUFFERED=1
+
+# Instala o supervisor nativo e limpa o cache
 RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
     supervisor \
@@ -13,11 +16,10 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY . .
 
-# Copia a receita do gerenciador para a pasta de configuração padrão
 COPY supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 
 EXPOSE 8000
 EXPOSE 8501
 
-# Altera o ponto de entrada do contêiner para o Supervisor controlar a sessão
-CMD ["/usr/bin/supervisord", "-c", "/etc/supervisor/conf.d/supervisord.conf"]
+# Chama o executável de forma limpa pelo path global do Linux
+CMD ["supervisord", "-c", "/etc/supervisor/conf.d/supervisord.conf"]
