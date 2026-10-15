@@ -66,43 +66,56 @@ with aba1:
             raw_products_list = []
             
             for _, row in df_products.iterrows():
-                fiscal = calculate_brazilian_taxes(float(row["current_cost_usd"]), float(row["desired_margin_percent"]))
+                # Tratamento preventivo de campos nulos vindos do banco de dados
+                cost_usd = row.get("current_cost_usd")
+                margin_percent = row.get("desired_margin_percent")
                 
-                # Guarda dados estruturados para alimentar o motor do PDF
-                raw_products_list.append({
-                    "id": row["id"],
-                    "product_name": row["product_name"],
-                    "current_cost_usd": row["current_cost_usd"],
-                    "desired_margin_percent": row["desired_margin_percent"],
-                    "is_active": row["is_active"]
-                })
+                # Valores padrão de fallback seguro caso estejam nulos no banco
+                cost_usd = float(cost_usd) if cost_usd is not None else 10.00
+                margin_percent = float(margin_percent) if margin_percent is not None else 30.0
                 
-                rows.append({
-                    "ID": row["id"],
-                    "Produto": row["product_name"],
-                    "Custo Original (USD)": f"$ {row['current_cost_usd']:.2f}",
-                    "Custo + Impostos (BRL)": f"R$ {fiscal['custo_nacionalizado_total']:.2f}",
-                    "Venda Sugerida (BRL)": f"R$ {fiscal['preco_venda_final_loja']:.2f}",
-                    "Lucro Líquido (BRL)": f"R$ {fiscal['lucro_liquido_venda']:.2f}",
-                    "Status": "Ativo 🟢" if row["is_active"] else "Pausado 🛑"
-                })
+                try:
+                    fiscal = calculate_brazilian_taxes(cost_usd, margin_percent)
+                    
+                    raw_products_list.append({
+                        "id": row["id"],
+                        "product_name": row["product_name"],
+                        "current_cost_usd": cost_usd,
+                        "desired_margin_percent": margin_percent,
+                        "is_active": row["is_active"]
+                    })
+                    
+                    rows.append({
+                        "ID": row["id"],
+                        "Produto": row["product_name"],
+                        "Custo Original (USD)": f"$ {cost_usd:.2f}",
+                        "Custo + Impostos (BRL)": f"R$ {fiscal['custo_nacionalizado_total']:.2f}",
+                        "Venda Sugerida (BRL)": f"R$ {fiscal['preco_venda_final_loja']:.2f}",
+                        "Lucro Líquido (BRL)": f"R$ {fiscal['lucro_liquido_venda']:.2f}",
+                        "Status": "Ativo 🟢" if row["is_active"] else "Pausado 🛑"
+                    })
+                except Exception:
+                    # Se uma linha específica falhar no cálculo matemático, pula sem quebrar o painel inteiro
+                    continue
             
-            st.dataframe(pd.DataFrame(rows), use_container_width=True)
-            
-            # --- SEÇÃO DE EXPORTAÇÃO CORPORATIVA ---
-            st.markdown("---")
-            st.subheader("📥 Exportação de Dados")
-            
-            # Gera o arquivo binário fisicamente usando o export_report.py
-            pdf_path = generate_pdf_report(raw_products_list)
-            
-            with open(pdf_path, "rb") as f:
-                st.download_button(
-                    label="📄 Baixar Relatório de Auditoria Fiscal (PDF)",
-                    data=f,
-                    file_name="auditoria_dropsync_pulse.pdf",
-                    mime="application/pdf"
-                )
+            if rows:
+                st.dataframe(pd.DataFrame(rows), use_container_width=True)
+                
+                # --- SEÇÃO DE EXPORTAÇÃO CORPORATIVA ---
+                st.markdown("---")
+                st.subheader("📥 Exportação de Dados")
+                
+                pdf_path = generate_pdf_report(raw_products_list)
+                
+                with open(pdf_path, "rb") as f:
+                    st.download_button(
+                        label="📄 Baixar Relatório de Auditoria Fiscal (PDF)",
+                        data=f,
+                        file_name="auditoria_dropsync_pulse.pdf",
+                        mime="application/pdf"
+                    )
+            else:
+                st.warning("Aguardando o robô de raspagem processar os custos iniciais dos produtos.")
         else:
             st.info("Nenhum produto cadastrado.")
     except Exception as e:
