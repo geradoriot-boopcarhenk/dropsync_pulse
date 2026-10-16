@@ -8,7 +8,7 @@ load_dotenv()
 
 # Inicialização segura do banco de dados na nuvem
 url = os.environ.get("SUPABASE_URL")
-key = os.environ.get("SUPABASE_SERVICE_ROLE_KEY")
+key = os.environ.get("SUPABASE_SERVICE_ROLE_KEY")  # Chave mestre para desenvolvimento e testes
 
 if not key:
     key = os.environ.get("SUPABASE_ANON_KEY")
@@ -25,7 +25,7 @@ if "user_id" not in st.session_state:
     try:
         res_perfil = supabase.table("profiles").select("id").limit(1).execute()
         if res_perfil.data:
-            st.session_state.user_id = res_perfil.data[0]["id"]
+            st.session_state.user_id = res_perfil.data["id"]
         else:
             st.session_state.user_id = "00000000-0000-0000-0000-000000000000"
     except Exception:
@@ -42,12 +42,10 @@ with st.sidebar:
     
     st.subheader("📝 Cadastrar Novo Produto")
     with st.form("form_cadastro", clear_on_submit=True):
-        nome_prod = st.text_input("Nome do Produto", placeholder="Ex: Parafusadeira Impacto 48V")
+        nome_prod = st.text_input("Nome do Produto", placeholder="Ex: Kit Ferramentas 581 Peças")
         url_fornecedor = st.text_input("URL do Fornecedor (Shopee ou AliExpress)", placeholder="https://...")
         
-        # 🟢 NOVO: Seleção explícita de Origem para evitar erros como o de São Paulo
         tipo_envio = st.selectbox("Origem / Envio do Fornecedor", ["Nacional (Estoque no Brasil 🇧🇷)", "Internacional (Vem da China 🇨🇳)"])
-        
         custo_digitado = st.number_input("Custo Bruto no Fornecedor (Em Reais - R\$)", min_value=1.0, value=50.0, step=5.0)
         margem_desejada = st.slider("Margem de Lucro Desejada (%)", min_value=10, max_value=200, value=30, step=5)
         
@@ -58,8 +56,6 @@ with st.sidebar:
                 st.warning("⚠️ Preencha todos os campos do formulário!")
             else:
                 custo_usd = custo_digitado / 5.65
-                
-                # Guarda a flag de nacionalidade no payload usando a descrição do fornecedor
                 is_nac_flag = True if "Brasil" in tipo_envio else False
                 
                 payload = {
@@ -68,7 +64,7 @@ with st.sidebar:
                     "supplier_url": url_fornecedor,
                     "current_cost_usd": round(custo_usd, 2),
                     "desired_margin_percent": float(margem_desejada),
-                    "is_active": is_nac_flag # Aproveitamos essa coluna bool do banco temporariamente para guardar a flag de envio
+                    "is_active": is_nac_flag
                 }
                 try:
                     res = supabase.table("monitored_products").insert(payload).execute()
@@ -94,21 +90,18 @@ with aba1:
             tabela_dados = []
             for prod in produtos:
                 cost_usd = prod.get("current_cost_usd", 3.40)
-                
-                # Lê a flag salva diretamente do cadastro
                 is_national = prod.get("is_active", True)
                 origem = "Nacional 🇧🇷" if is_national else "Internacional 🇨🇳"
                 
                 custo_brl_base = cost_usd * 5.65
                 
-                # Executa o cálculo tributário exato com base na origem real escolhida
                 if is_national:
-                    custo_com_imposto = custo_brl_base * 1.17  # Apenas ICMS por dentro brasileiro de SP
+                    custo_com_imposto = custo_brl_base * 1.17  # Apenas ICMS nacional
                 else:
                     if cost_usd <= 50.0:
-                        custo_com_imposto = (custo_brl_base * 1.20) * 1.17  # Remessa Conforme Abaixo de \$50
+                        custo_com_imposto = (custo_brl_base * 1.20) * 1.17  # Remessa Conforme <= \$50
                     else:
-                        custo_com_imposto = (custo_brl_base * 1.60) * 1.17  # Remessa Conforme Acima de \$50
+                        custo_com_imposto = (custo_brl_base * 1.60) * 1.17  # Remessa Conforme > \$50
                 
                 margem_fator = 1 + (prod.get("desired_margin_percent", 30.0) / 100.0)
                 venda_sugerida = custo_com_imposto * margem_fator
@@ -129,12 +122,20 @@ with aba1:
 with aba2:
     st.subheader("🚀 Escolha o Plano Ideal para sua Operação")
     st.markdown("### 🔥 **14 Dias de Teste Grátis em Qualquer Plano!**")
+    st.caption("Experimente a plataforma com todas as funções liberadas. Cancele quando quiser diretamente no painel.")
+    st.write("")
+    
     col_p1, col_p2, col_p3 = st.columns(3)
     with col_p1:
-        st.markdown("### 📦 Starter\n**R\$ 149** /mês\n⭐ **14 Dias Grátis**")
+        st.markdown("### 📦 Starter\n**R\$ 149** /mês\n* 20 produtos monitorados\n* Varredura a cada 12 horas\n⭐ **14 Dias Grátis**")
+        # 🟢 Substitua com o link do plano Starter do seu Asaas se desejar criar
+        st.link_button("Experimentar Starter", "https://asaas.com", use_container_width=True)
+        
     with col_p2:
-        st.markdown("### ⚡ Pro Scale `Popular`\n**R\$ 299** /mês\n* 100 produtos\n* Varredura 4h\n✅ **Auto-Swap ativo**\n⭐ **14 Dias Grátis**")
-        # 🟢 Cole o link final copiado do Asaas aqui dentro das aspas:
+        st.markdown("### ⚡ Pro Scale `Popular`\n**R\$ 299** /mês\n* 100 produtos monitorados\n* Varredura a cada 4 horas\n✅ **Auto-Swap ativo**\n⭐ **14 Dias Grátis**")
         st.link_button("Experimentar Pro Scale", "https://asaas.com", type="primary", use_container_width=True)
+        
     with col_p3:
-        st.markdown("### 👑 Enterprise Premium\n**R\$ 499** /mês\n⭐ **14 Dias Grátis**")
+        st.markdown("### 👑 Enterprise Premium\n**R\$ 499** /mês\n* 500 produtos monitorados\n* Varredura a cada 1 hora\n✅ **Auto-Swap ativo**\n⭐ **14 Dias Grátis**")
+        # 🟢 Substitua com o link do plano Enterprise do seu Asaas se desejar criar
+        st.link_button("Experimentar Enterprise", "https://asaas.com", use_container_width=True)
