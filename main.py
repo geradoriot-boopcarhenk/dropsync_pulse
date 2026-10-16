@@ -1,57 +1,37 @@
-# ~/dropsync_pulse/main.py
 import os
-from fastapi import FastAPI, HTTPException, status
-from pydantic import BaseModel, Field
-from typing import List
+from fastapi import FastAPI, HTTPException, Header, status
+from pydantic import BaseModel
+from typing import List, Optional
 from dotenv import load_dotenv
 from supabase import create_client, Client
 
-# Realiza a importacao segura do modulo de faturamento
-from payment import payment_router
-
 load_dotenv()
 
-app = FastAPI(
-    title="DropSync Pulse API",
-    description="Core Enterprise Gateway para o ecossistema DropSync SaaS",
-    version="1.0.0"
-)
-
-# Registra formalmente as rotas do Webhook do Asaas
-app.include_router(payment_router)
+app = FastAPI(title="DropSync Pulse API", version="1.0.0")
 
 SUPABASE_URL = os.environ.get("SUPABASE_URL")
 SUPABASE_KEY = os.environ.get("SUPABASE_SERVICE_ROLE_KEY")
-
-if not SUPABASE_URL or not SUPABASE_KEY:
-    raise RuntimeError("Variáveis de ambiente do Supabase ausentes.")
-
 supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 
+# --- SCHEMAS PYDANTIC ---
 class ProductCreate(BaseModel):
-    user_id: str = None
+    user_id: str
     product_name: str
     supplier_url: str
-    desired_margin_percent: float = Field(default=30.0, ge=1.0)
-    store_product_id: str = None
+    desired_margin_percent: float
 
 class ProductResponse(BaseModel):
     id: int
+    user_id: str
     product_name: str
     supplier_url: str
-    current_cost_usd: float
     desired_margin_percent: float
+    current_cost_usd: Optional[float]
     is_active: bool
 
-@app.get("/", tags=["Health"])
-def health_check():
-    try:
-        supabase.table("saas_plans").select("id").limit(1).execute()
-        return {"status": "online", "database_connection": "estavel", "environment": "Fedora Linux"}
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+# --- ROTAS DA API ---
 
-@app.post("/products/", response_model=List[ProductResponse], status_code=status.HTTP_201_CREATED, tags=["Produtos"])
+@app.post("/products", response_model=List[ProductResponse], status_code=status.HTTP_201_CREATED, tags=["Produtos"])
 def create_monitored_product(product: ProductCreate):
     payload = {
         "user_id": product.user_id,
@@ -65,3 +45,28 @@ def create_monitored_product(product: ProductCreate):
         return response.data
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/webhooks/asaas", status_code=status.HTTP_200_OK, tags=["Webhooks"])
+def receive_asaas_webhook(payload: dict, asaas_access_token: Optional[str] = Header(None)):
+    """Recebe confirmacoes de pagamento do Asaas e ativa a licenca do lojista."""
+    # Valida o token de seguranca configurado no Railway
+    expected_token = os.environ.get("ASAAS_WEBHOOK_TOKEN")
+    
+    if expected_token and asaas_access_token != expected_token:
+        raise HTTPException(status_code=401, detail="Token de autenticacao invalido")
+
+    evento = payload.get("event")
+    
+    if evento == "PAYMENT_RECEIVED":
+        payment_data = payload.get("payment", {})
+        # Busca o ID do cliente/usuario mockado para fins de homologacao e testes
+        user_mock_id = "00000000-0000-0000-0000-000000000000"
+        
+        try:
+            # Atualiza o status da assinatura do perfil para ativo
+            supabase.table("profiles").update({"subscription_status": "active"}).eq("id", user_mock_id).execute()
+            return {"status": "success", "message": "Licenca ativada com sucesso via Pix"}
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=f"Erro ao atualizar banco: {str(e)}")
+            
+    return {"status": "ignored", "message": f"Evento {evento} processado sem acoes adicionais"}
