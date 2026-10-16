@@ -1,14 +1,22 @@
-logs/
+# Chaves e Credenciais Privadas
+firebase-credentials.json
 .env
+*.env
+*.json
+!requirements.txt
+
+# Arquivos Locais do Sistema Operacional e Interpretador
 __pycache__/
-firebase-credentials.json
-firebase-credentials.json
-.env
-firebase-credentials.json
-.env
-logs/
-__pycache__/
-firebase-credentials.json
-.env
+*.pyc
+*.pyo
+*.pyd
+.Python
+env/
+venv/
+.venv/
+
+# Logs de Execução e Arquivos de Auditoria do Supervisor
 *.log
-ngrok.tgz
+logs/
+.logs/
+*.tgz
