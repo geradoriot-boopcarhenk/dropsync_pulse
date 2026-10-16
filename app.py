@@ -132,7 +132,10 @@ with aba1:
                     margin_percent = float(margin_percent) if margin_percent is not None else 30.0
                     
                     # Identificacao Inteligente: chaveia para nacional se o link possuir marcas locais (.br) ou custo reduzido
-                    is_national = ".com.br" in url_fornecedor or "shopee" in url_fornecedor or cost_usd < 4.0
+                                        # Ajuste Cirúrgico: Só considera nacional se o link contiver explicitamente shopee ou .com.br
+                    # Links do AliExpress (.com) ou com custo internacional passam obrigatoriamente pela esteira aduaneira
+                    is_national = ("shopee" in url_fornecedor or ".com.br" in url_fornecedor) and "aliexpress" not in url_fornecedor
+
                     
                     try:
                         fiscal = calculate_brazilian_taxes(cost_usd, margin_percent, is_national=is_national)
