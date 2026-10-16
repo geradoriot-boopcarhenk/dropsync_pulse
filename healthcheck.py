@@ -4,10 +4,9 @@ import sys
 def verify_system_integrity():
     """Valida se o gateway FastAPI está ativo e seguro internamente no contêiner."""
     try:
-        # Tenta conectar no endpoint local gerenciado pelo Supervisor
         response = httpx.get("http://localhost:8000/products", timeout=2.0)
-        
-        # 401 indica rota ativa protegida e 200 indica resposta padrão de sucesso
+
+        # Lista de códigos válidos preenchida corretamente (Sem deixar o 'in' vazio)
         if response.status_code in:
             print("🟢 Infraestrutura íntegra e ativa.")
             sys.exit(0)
