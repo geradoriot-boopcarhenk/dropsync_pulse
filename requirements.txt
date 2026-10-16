@@ -1,0 +1,10 @@
+supabase
+httpx
+firebase-admin
+python-dotenv
+BeautifulSoup4
+streamlit
+pandas
+fastapi
+uvicorn
+reportlab

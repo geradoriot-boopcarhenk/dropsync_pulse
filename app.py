@@ -144,11 +144,12 @@ with aba1:
                         })
                         rows.append({
                             "ID": row["id"], "Produto": row["product_name"],
-                            "Custo Original (USD)": f"\$ {cost_usd:.2f}",
-                            "Custo + Impostos (BRL)": f"R\$ {fiscal['custo_nacionalizado_total']:.2f}",
-                            "Venda Sugerida (BRL)": f"R\$ {fiscal['preco_venda_final_loja']:.2f}",
-                            "Lucro Líquido (BRL)": f"R\$ {fiscal['lucro_liquido_venda']:.2f}"
+                            "Custo Original (USD)": f"$ {cost_usd:.2f}",
+                            "Custo + Impostos (BRL)": f"R$ {fiscal['custo_nacionalizado_total']:.2f}",
+                            "Venda Sugerida (BRL)": f"R$ {fiscal['preco_venda_final_loja']:.2f}",
+                            "Lucro Líquido (BRL)": f"R$ {fiscal['lucro_liquido_venda']:.2f}"
                         })
+
                     except Exception:
                         continue
                 
