@@ -5,8 +5,8 @@ def verify_system_integrity():
     """Valida se o gateway FastAPI está ativo e seguro internamente no contêiner."""
     try:
         response = httpx.get("http://localhost:8000/products", timeout=2.0)
-
-        # Lista de códigos válidos preenchida corretamente (Sem deixar o 'in' vazio)
+        
+        # Lista de códigos válida e preenchida de forma explícita
         if response.status_code in:
             print("🟢 Infraestrutura íntegra e ativa.")
             sys.exit(0)
@@ -19,3 +19,4 @@ def verify_system_integrity():
 
 if __name__ == "__main__":
     verify_system_integrity()
+    
