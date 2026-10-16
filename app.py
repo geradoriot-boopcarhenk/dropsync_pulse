@@ -135,6 +135,6 @@ with aba2:
     with col_p2:
         st.markdown("### ⚡ Pro Scale `Popular`\n**R\$ 299** /mês\n* 100 produtos\n* Varredura 4h\n✅ **Auto-Swap ativo**\n⭐ **14 Dias Grátis**")
         # 🟢 Cole o link final copiado do Asaas aqui dentro das aspas:
-         st.link_button("Experimentar Pro Scale", "https://asaas.com", type="primary", use_container_width=True)
+        st.link_button("Experimentar Pro Scale", "https://asaas.com", type="primary", use_container_width=True)
     with col_p3:
         st.markdown("### 👑 Enterprise Premium\n**R\$ 499** /mês\n⭐ **14 Dias Grátis**")
