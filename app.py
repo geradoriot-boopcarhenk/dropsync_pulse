@@ -174,4 +174,50 @@ with aba1:
         st.error(f"Erro na camada visual: {str(e)}")
 
 with aba2:
-    st.subheader("🛒 Planos e Licenciamento Ativo")
+        st.subheader("🚀 Escolha o Plano Ideal para sua Operação")
+    st.markdown("### 🔥 **14 Dias de Teste Grátis em Qualquer Plano!**")
+    st.caption("Experimente a plataforma com todas as funções liberadas. Cancele quando quiser diretamente no painel.")
+    st.write("")
+
+    # Organização visual dos planos em 3 colunas
+    col_p1, col_p2, col_p3 = st.columns(3)
+
+    with col_p1:
+        st.markdown("""
+        ### 📦 Starter
+        **R\$ 149** /mês
+        *   **20** produtos monitorados
+        *   Varredura a cada **12 horas**
+        *   Alertas via Telegram
+        *   ❌ Sem Auto-Swap de fornecedor
+        *   ⭐ **14 Dias Grátis**
+        """)
+        if st.button("Experimentar Starter", key="plan_starter", use_container_width=True):
+            st.info("🔄 Iniciando trial do plano Starter via integração Asaas...")
+
+    with col_p2:
+        st.markdown("""
+        ### ⚡ Pro Scale `Popular`
+        **R\$ 299** /mês
+        *   **100** produtos monitorados
+        *   Varredura a cada **4 horas**
+        *   Alertas via Telegram + Push
+        *   ✅ **Auto-Swap ativo** (Contingência)
+        *   ⭐ **14 Dias Grátis**
+        """)
+        if st.button("Experimentar Pro Scale", key="plan_pro", type="primary", use_container_width=True):
+            st.info("🔄 Iniciando trial do plano Pro Scale via integração Asaas...")
+
+    with col_p3:
+        st.markdown("""
+        ### 👑 Enterprise Premium
+        **R\$ 499** /mês
+        *   **500** produtos monitorados
+        *   Varredura a cada **1 hora** (Realtime)
+        *   Suporte Prioritário dedicado
+        *   ✅ **Auto-Swap ativo** (Prioridade total)
+        *   ⭐ **14 Dias Grátis**
+        """)
+        if st.button("Experimentar Enterprise", key="plan_enterprise", use_container_width=True):
+            st.info("🔄 Iniciando trial do plano Enterprise via integração Asaas...")
+
