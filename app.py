@@ -114,12 +114,37 @@ aba1, aba2 = st.tabs(["📊 Painel Analítico Geral", "🛒 Checkout Seguro"])
 
 with aba1:
     # --- BARRA LATERAL MULTI-TENANT ---
-    st.sidebar.header("📦 Adicionar Link")
-    prod_name = st.sidebar.text_input("Nome do Produto")
-    supplier_url = st.sidebar.text_input("Link do Fornecedor")
-    margin = st.sidebar.slider("Margem de Lucro Desejada (%)", 10, 200, 30)
+            st.subheader("📝 Cadastrar Novo Produto")
+        with st.form("form_cadastro", clear_on_submit=True):
+            nome_prod = st.text_input("Nome do Produto", placeholder="Ex: Ventilador Turbo Portátil")
+            url_fornecedor = st.text_input("URL do Fornecedor (Shopee ou AliExpress)", placeholder="https://...")
+            
+            # 🟢 Campo Dinâmico Novo com Entrada Manual em Reais
+            custo_digitado = st.number_input("Custo Bruto no Fornecedor (Em Reais - R$)", min_value=1.0, value=50.0, step=5.0)
+            
+            margem_desejada = st.slider("Margem de Lucro Desejada (%)", min_value=10, max_value=200, value=30, step=5)
+            
+            btn_cadastrar = st.form_submit_button("Cadastrar e Calcular Margens", use_container_width=True)
+            
+            if btn_cadastrar and nome_prod and url_fornecedor:
+                # Transforma a entrada de BRL para USD para alimentar o motor fiscal original
+                custo_usd = custo_digitado / 5.65
+                
+                # Executa a verificação segura na tabela de perfis
+                perfil_query = supabase.table("profiles").select("id").eq("id", st.session_state.user_id).execute()
+                if perfil_query.data:
+                    payload = {
+                        "user_id": st.session_state.user_id,
+                        "product_name": nome_prod,
+                        "supplier_url": url_fornecedor,
+                        "current_cost_usd": round(custo_usd, 2),
+                        "desired_margin_percent": float(margem_desejada),
+                        "is_active": True
+                    }
+                    supabase.table("monitored_products").insert(payload).execute()
+                    st.success(f"🎉 '{nome_prod}' cadastrado com sucesso! Custo de R$ {custo_digitado:.2f} processado.")
+                    st.rerun()
 
-    if st.sidebar.button("Ativar Monitoramento", type="primary"):
         if prod_name and supplier_url:
             try:
                 payload = {
