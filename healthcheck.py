@@ -6,9 +6,12 @@ def verify_system_integrity():
     try:
         response = httpx.get("http://localhost:8000/products", timeout=2.0)
         
-        # Lista de códigos válida e preenchida de forma explícita
-        if response.status_code in:
+        # Validação direta e explícita usando comparação numérica pura
+        if response.status_code == 200:
             print("🟢 Infraestrutura íntegra e ativa.")
+            sys.exit(0)
+        elif response.status_code == 401:
+            print("🟢 Infraestrutura ativa e rotas protegidas.")
             sys.exit(0)
         else:
             print(f"⚠️ Alerta de anomalia: Código {response.status_code}")
@@ -19,4 +22,3 @@ def verify_system_integrity():
 
 if __name__ == "__main__":
     verify_system_integrity()
-    
