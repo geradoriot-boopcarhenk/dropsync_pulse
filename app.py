@@ -50,13 +50,14 @@ with st.sidebar:
             custo_usd = custo_digitado / 5.65
             
             payload = {
-                "user_id": st.session_state.user_id,
+                "user_id": "00000000-0000-0000-0000-000000000000" if st.session_state.user_id == "00000000-0000-0000-0000-000000000000" else st.session_state.user_id,
                 "product_name": nome_prod,
                 "supplier_url": url_fornecedor,
                 "current_cost_usd": round(custo_usd, 2),
                 "desired_margin_percent": float(margem_desejada),
                 "is_active": True
             }
+
             try:
                 supabase.table("monitored_products").insert(payload).execute()
                 st.success(f"🎉 '{nome_prod}' cadastrado com sucesso!")
